@@ -61,8 +61,8 @@ def filter_objects(working_dir, esxtop_data_frame):
 # Function to implement Counter Group filtration
 def filer_counter_group(object_filtered_data_frame, cg_selection, working_dir):
     col_name_df = pd.DataFrame(object_filtered_data_frame.columns)
-    c_gn_c_df = col_name_df[0].str.split(("\\"), expand=True)
-    cg_df = c_gn_c_df[3].str.split(("\("), expand=True)
+    c_gn_c_df = col_name_df[0].str.split("\\", expand=True)
+    cg_df = c_gn_c_df[3].str.split("\\(", expand=True)
     c_gn_c_df[3] = cg_df[0]
     column_list = [0]
     column_list.extend(c_gn_c_df.index[c_gn_c_df[3] == cg_selection].tolist())
@@ -87,7 +87,7 @@ def filer_counter(cg_filtered_data_frame, c_selection, cg_selection, working_dir
     col_name_df = pd.DataFrame(cg_filtered_data_frame.columns)
     time_se = str(col_name_df[0][0])
     col_name_df = col_name_df.drop([0])
-    c_gn_c_df = col_name_df[0].str.split(("\\"), expand=True)
+    c_gn_c_df = col_name_df[0].str.split("\\", expand=True)
     column_list = list()
     try:
         column_list.extend(c_gn_c_df.index[c_gn_c_df[4] == c_selection].tolist())
@@ -119,8 +119,8 @@ def filer_counter(cg_filtered_data_frame, c_selection, cg_selection, working_dir
 # Function to prepare Counter group selection list
 def prep_cg_selection(object_filtered_data_frame):
     col_name_df = pd.DataFrame(object_filtered_data_frame.columns)
-    c_gn_c_df = col_name_df[0].str.split(("\\"), expand=True)
-    cg_df = c_gn_c_df[3].str.split(("\("), expand=True)
+    c_gn_c_df = col_name_df[0].str.split("\\", expand=True)
+    cg_df = c_gn_c_df[3].str.split("\\(", expand=True)
     c_gn_c_df[3] = cg_df[0]
     counter_groups = pd.DataFrame(cg_df[0].unique())
     counter_groups.columns = ['Counter Groups']
@@ -158,7 +158,7 @@ def drop_sys_obj(data):
 
 
 # ------------------------------------------------------------------------------------------
-# Function to Prepare a Object Name
+# Function to Prepare an Object Name
 def find_obj(data, scope):
     obj_id = data.split("\\")
     if scope == 'sys':
