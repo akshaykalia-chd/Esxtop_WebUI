@@ -1,9 +1,12 @@
+import logging
 import os
-from datetime import datetime
 
 import pandas as pd
 
 from ui_functions import *
+
+logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 # --------------------------------------------------------------------------------
@@ -26,28 +29,29 @@ def load_csv(csv_location):
         error("No csv file selected")
     else:
         try:
-            print(datetime.now(), " Loading ", csv_location, " using Default encoding. This may take a while")
+            logging.info(f"Loading {csv_location} using Default encoding. This may take a while")
             tdf = pd.DataFrame(pd.read_csv(csv_location))
-            print(datetime.now(), " CSV file successfully loaded to Memory")
+            logging.info("CSV file successfully loaded to Memory")
             return tdf
         except Exception as e:
-            print(datetime.now(), "file read error:", str(e))
+            logging.error(f"file read error:{str(e)}")
         try:
-            print(datetime.now(), " Loading ", csv_location, " using ISO-8859–1 encoding. This may take a while")
+            logging.info(f"Loading {csv_location} using ISO-8859–1 encoding. This may take a while")
             tdf = pd.DataFrame(pd.read_csv(csv_location, encoding='ISO-8859–1'))
-            print(datetime.now(), " CSV file successfully loaded to Memory")
+            logging.info("CSV file successfully loaded to Memory")
             return tdf
         except Exception as e:
-            errmsg = "File Read Error:" + str(e)
-            print(datetime.now(), errmsg)
+            errmsg = f"File Read Error:{str(e)}"
+            logging.error(errmsg)
             if "Unable to allocate" in errmsg:
                 error("File too big to load")
             else:
                 error(errmsg)
                 fix_file(csv_location)
 
+
 def fix_file(csv_location):
-    print(datetime.now(), " Attempting to fix file structure")
+    logging.info("Attempting to fix file structure")
     numberoflines = 0
     try:
         file = open(csv_location, "r")
@@ -68,8 +72,6 @@ def fix_file(csv_location):
         file.writelines(fixedfile)
         file.close()
         dialog("Fix success, please try to reload the file!")
-    except:
-        error("Fix failure, please send this file to akalia@vmware.com for debugging")
-
-
-
+    except Exception as e:
+        logging.error(str(e))
+        error("Fix failure, please send this file to akshay.kalia@broadcom.com for debugging")

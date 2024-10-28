@@ -1,5 +1,10 @@
+import logging
+
 from fault_finder import *
 from ploting_ops import *
+
+logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class EsxtopDrill(wx.Frame):
@@ -81,7 +86,7 @@ class EsxtopDrill(wx.Frame):
         try:
             self.load_data()
         except:
-            print(datetime.now(), 'Error Loading the CSV file')
+            logging.error('Error Loading the CSV file')
         self.choice.Clear()
         self.choice.AppendItems(self.cg_list)
         self.choice_1.Clear()
@@ -206,6 +211,7 @@ class EsxtopDrill(wx.Frame):
         cls.working_dir = working_dir
         if not (cls.cg_list[0] == 'Not Set'):
             prep_working_dir(cls.cg_list, cls.working_dir)
+        logging.info(f'Working Dir is set to {cls.working_dir}')
 
     @classmethod
     def load_data(cls):

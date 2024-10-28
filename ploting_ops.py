@@ -1,9 +1,12 @@
+import logging
 import os
 import time
-from datetime import datetime
-from PIL import Image
 
 import matplotlib.pyplot as plt
+from PIL import Image
+
+logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 # -----------------------------------------------------------------------------------------
@@ -33,7 +36,7 @@ def plotit(c_sel, filepath, c_filtred_data_frame, cg_sel):
     try:
         plt.savefig(pname, bbox_inches="tight")
         plt.close()
-        print(datetime.now(), " Generated:", pname)
+        logging.info(f"Generated:{pname}")
         img = Image.open(pname)
         img.show()
 
@@ -46,7 +49,7 @@ def plotit(c_sel, filepath, c_filtred_data_frame, cg_sel):
             fname = os.path.join(filepath, cg_sel, pname)
             plt.savefig(fname, bbox_inches="tight")
             plt.close()
-            print(datetime.now(), " Generated:", fname)
+            logging.info(f"Generated:{fname}")
             img = Image.open(fname)
             img.show()
         except FileNotFoundError:
@@ -54,7 +57,7 @@ def plotit(c_sel, filepath, c_filtred_data_frame, cg_sel):
             fname = os.path.join(filepath, cg_sel, pname)
             plt.savefig(fname, bbox_inches="tight", dpi=100)
             plt.close()
-            print(datetime.now(), " Generated:", fname)
+            logging.info(f"Generated:{fname}")
             img = Image.open(fname)
             img.show()
     return

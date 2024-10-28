@@ -1,9 +1,14 @@
+import logging
+
 from file_dir_ops import *
 from filters_ops import *
 
+logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def fault_finder(data_frame, working_dir):
-    print(datetime.now(), ' Processing Started')
+    logging.info('Processing Started')
     c_map_df = pd.DataFrame(pd.read_csv('c_map.csv'))
     cg_selection = list(c_map_df['Counter_Group'].unique())
     prep_working_dir(cg_selection, working_dir)
@@ -34,9 +39,8 @@ def fault_finder(data_frame, working_dir):
             try:
                 temp_df2 = temp_df2.drop(columns=['(PDH-CSV 4.0) (UTC)(0)'])
             except AttributeError:
-                print(datetime.now(),
-                      ' Missing counter', counter,
-                      '.The input csv is not collected using -a switch of esxtop. Moving on')
+                logging.warning(f'Missing counter {counter} The input csv is not collected using -a switch of esxtop. '
+                                f'Moving on')
                 continue
 
             threshold = c_map_df.iloc[np.where(c_map_df.Counter_Group.values == cg)]
@@ -89,9 +93,8 @@ def fault_finder(data_frame, working_dir):
                     max_avg_count_df.loc['Count_Warning'] = max_avg_count_df.loc['Count_Warning_Critical'] - \
                                                             max_avg_count_df.loc['Count_Critical']
                 except ValueError:
-                    print(datetime.now(),
-                          ' Missing counter', counter,
-                          '.The input csv is not collected using -a switch of esxtop. Moving on')
+                    logging.warning(f'Missing counter {counter} The input csv is not collected using -a switch of '
+                                    'esxtop. Moving on')
 
                 if counter_scope != 'obj_hig':
                     for col in col_list:
@@ -214,9 +217,8 @@ def fault_finder(data_frame, working_dir):
                                         warning_threshold.append(warning_val)
                                         critical_threshold.append(critical_val)
                         except:
-                            print(datetime.now(),
-                                  ' Missing counter', counter,
-                                  '.The input csv is not collected using -a switch of esxtop. Moving on')
+                            logging.warning(f'Missing counter {counter} The input csv is not collected using -a switch '
+                                            f'of esxtop. Moving on')
 
     object_name = pd.Series(object_name, name='Object')
     counter_name = pd.Series(counter_name, name='Counter')
@@ -239,5 +241,5 @@ def fault_finder(data_frame, working_dir):
     outfile = 'anomalies-' + str(int(time.time())) + '.csv'
     outfile = os.path.join(working_dir, outfile)
     out_df.to_csv(outfile, index=False)
-    print(datetime.now(), ' Done processing, please review %s' % outfile)
-    dialog('Done processing for faults, please review %s' % outfile)
+    logging.info(f'Done processing, please review {outfile}')
+    dialog(f'Done processing for faults, please review {outfile}')
