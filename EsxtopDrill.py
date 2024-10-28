@@ -15,6 +15,7 @@ class EsxtopDrill(wx.Frame):
     tmp_df_c_filtered = pd.DataFrame()
     object_filtered_data_frame = pd.DataFrame()
     working_dir = ""
+    logging.info('Esxtop Drill UI started')
 
     def __init__(self):
 
