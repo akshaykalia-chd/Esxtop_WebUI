@@ -5,9 +5,10 @@ import time
 import numpy as np
 import pandas as pd
 
+from const import LOG_FILE
 from ui_functions import *
 
-logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
                     datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 

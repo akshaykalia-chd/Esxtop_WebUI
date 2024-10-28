@@ -5,7 +5,10 @@ import time
 import matplotlib.pyplot as plt
 from PIL import Image
 
-logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+from const import LOG_FILE
+
+log_file = LOG_FILE
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
                     datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 

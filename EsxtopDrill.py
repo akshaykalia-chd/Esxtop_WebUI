@@ -1,9 +1,7 @@
-import logging
-
 from fault_finder import *
 from ploting_ops import *
 
-logging.basicConfig(filename='esxtop_drill.log', encoding='utf-8', level=logging.INFO,
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
                     datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
