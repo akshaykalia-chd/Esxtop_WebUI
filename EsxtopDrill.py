@@ -228,6 +228,8 @@ class EsxtopDrill(wx.Frame):
         cls.object_filtered_data_frame = data
 
     # --------------------------------------------------------------------------------------
+
+
 app = wx.App()
 EsxtopDrill()
 app.MainLoop()
