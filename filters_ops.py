@@ -1,11 +1,15 @@
+import logging
 import os
 import time
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
+from const import LOG_FILE
 from ui_functions import *
+
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
+                    datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 # --------------------------------------------------------------------------
@@ -53,7 +57,7 @@ def filter_objects(working_dir, esxtop_data_frame):
         outfile = str(object_selection[0] + str(int(time.time())) + ".csv")
         outfile = os.path.join(working_dir, outfile)
         out_df.to_csv(outfile, index=False)
-        print(datetime.now(), " Generated: ", outfile)
+        logging.info(f" Generated: {outfile}")
     return out_df
 
 
@@ -76,7 +80,7 @@ def filer_counter_group(object_filtered_data_frame, cg_selection, working_dir):
     outfile = str(cg_selection + "-" + str(int(time.time())) + ".csv")
     outfile = os.path.join(working_dir, cg_selection, outfile)
     out_df.to_csv(outfile, index=False)
-    print(datetime.now(), " Generated: ", outfile)
+    logging.info(f"Generated: {outfile}")
     return out_df
 
 
@@ -109,9 +113,10 @@ def filer_counter(cg_filtered_data_frame, c_selection, cg_selection, working_dir
             outfile = outfile.replace("?", " ")
             outfile = os.path.join(working_dir, cg_selection, outfile)
             out_df.to_csv(outfile, index=False)
-        print(datetime.now(), " Generated: ", outfile)
+        logging.info(f"Generated: {outfile}")
         return out_df
-    except KeyError:
+    except KeyError as e:
+        logging.error(str(e))
         return
 
 
@@ -151,7 +156,7 @@ def drop_sys_obj(data):
             c_name = c_df.at[c_index, 0]
             c_name_list.append(c_name)
         out_df = data.drop(c_name_list, axis=1)
-        print(datetime.now(), ' System objects dropped')
+        logging.info('System objects dropped')
         return out_df
     else:
         return data
