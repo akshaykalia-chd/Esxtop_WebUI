@@ -1,3 +1,6 @@
+import logging
+
+import os
 from file_dir_ops import *
 from filters_ops import *
 
@@ -7,7 +10,12 @@ logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
 
 def fault_finder(data_frame, working_dir):
     logging.info('Processing Started')
-    c_map_df = pd.DataFrame(pd.read_csv('c_map.csv'))
+    try:
+        c_map_df = pd.DataFrame(pd.read_csv('c_map.csv'))
+    except Exception as e:
+        logging.exception(e)
+        logging.info(os.getcwd())
+
     cg_selection = list(c_map_df['Counter_Group'].unique())
     prep_working_dir(cg_selection, working_dir)
     object_name = list()
