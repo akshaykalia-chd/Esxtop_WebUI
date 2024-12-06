@@ -2,7 +2,11 @@
 
 The project is attempt to make the application 
 - System UI compatible to MAC and Windows
-- Convert to an API driven webapp
+  - The code now supports both MAC and Windows
+  - There is a Mac app available for downland 
+  - WIP: Windows App
+    - McAfee treats it as a virus!!
+- WIP: Convert to an API driven webapp
 
 ### Starting the Mac app
 1. Download the Mac_Application Dir
