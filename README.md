@@ -1,17 +1,29 @@
 # Fork of esxtop drill V2
 
-The project is attempt to make the application 
-- System UI compatible to MAC and Windows
-  - The code now supports both MAC and Windows
-  - There is a Mac app available for downland 
-  - WIP: Windows App
-    - McAfee treats it as a virus!!
-- WIP: Convert to an API driven webapp
+The project is attempt to make the application UI compatible to MAC and Windows
+  - [x] The code now supports both MAC and Windows
+  - [x] There is a Mac app available for downland 
+  - [x] There is a Windows app available for downland
+    >[!WARNING]
+    >
+    >McAfee treats it as a virus!!
+    > 
+    >But it is not
+- [ ] WIP: Convert to an API driven webapp
 
 ### Starting the Mac app
 1. Download the Mac_Application Dir
 2. Navigate to Mac_Application
 3. Start EsxtopDrill app
+4. Wait for application to load 
+5. For the first Run application can take some time 
+6. Once the application has started you should see below UI ![img_1.png](img_1.png)
+7. The application log can be found under ~/esxtop_drill.log
+
+### Starting the Windows  app
+1. Download the Windows_Application Dir
+2. Navigate to Windows_Application Dir
+3. Start EsxtopDrill/EsxtopDrill.exe app
 4. Wait for application to load 
 5. For the first Run application can take some time 
 6. Once the application has started you should see below UI ![img_1.png](img_1.png)
