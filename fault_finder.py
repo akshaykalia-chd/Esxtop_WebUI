@@ -3,6 +3,17 @@ import logging
 import os
 from file_dir_ops import *
 from filters_ops import *
+from const import (
+    COUNTER_MAP_FILE,
+    COUNTER_SCOPE_OBJ_HIGHER_IS_BETTER,
+    COUNTER_TYPE_BOOL,
+    COUNTER_TYPE_NUM_CAL,
+    HBA_OVERLOAD_MESSAGE,
+    SPECIAL_COUNTER_ADAPTER_Q_DEPTH,
+    SPECIAL_COUNTER_COMMANDS_PER_SEC,
+    SPECIAL_COUNTER_VM_WAIT,
+    TIME_COLUMN_NAME,
+)
 
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
                     datefmt='%m/%d/%Y %I:%M:%S %p', format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,7 +22,7 @@ logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
 def fault_finder(data_frame, working_dir):
     logging.info('Processing Started')
     try:
-        c_map_df = pd.DataFrame(pd.read_csv('c_map.csv'))
+        c_map_df = pd.DataFrame(pd.read_csv(COUNTER_MAP_FILE))
     except Exception as e:
         logging.exception(e)
         logging.info(os.getcwd())
@@ -43,7 +54,7 @@ def fault_finder(data_frame, working_dir):
         for counter in counters:
             temp_df2 = filer_counter(temp_df1, counter, cg, working_dir)
             try:
-                temp_df2 = temp_df2.drop(columns=['(PDH-CSV 4.0) (UTC)(0)'])
+                temp_df2 = temp_df2.drop(columns=[TIME_COLUMN_NAME])
             except AttributeError:
                 logging.warning(f'Missing counter {counter} The input csv is not collected using -a switch of esxtop. '
                                 f'Moving on')
@@ -62,14 +73,14 @@ def fault_finder(data_frame, working_dir):
             col_list = pd.DataFrame(temp_df2.columns)
             col_list = list(col_list[0].unique())
 
-            if counter_type != 'Bool' and counter_type != 'Num_cal':
+            if counter_type != COUNTER_TYPE_BOOL and counter_type != COUNTER_TYPE_NUM_CAL:
                 ok_val = float(ok_val[0])
                 warning_val = float(warning_val[0])
                 critical_val = float(critical_val[0])
                 message_val = message_val[0]
                 avg_series = pd.Series(temp_df2.mean())
                 max_series = pd.Series(temp_df2.max())
-                if counter_scope != 'obj_hig':
+                if counter_scope != COUNTER_SCOPE_OBJ_HIGHER_IS_BETTER:
                     count_ok_series = pd.Series((temp_df2 <= ok_val).apply(np.count_nonzero))
                     count_critical_series = pd.Series((temp_df2 >= critical_val).apply(np.count_nonzero))
                     count_warning_series = pd.Series((temp_df2 > ok_val).apply(np.count_nonzero))
@@ -102,12 +113,12 @@ def fault_finder(data_frame, working_dir):
                     logging.warning(f'Missing counter {counter} The input csv is not collected using -a switch of '
                                     'esxtop. Moving on')
 
-                if counter_scope != 'obj_hig':
+                if counter_scope != COUNTER_SCOPE_OBJ_HIGHER_IS_BETTER:
                     for col in col_list:
                         obj_max_val = max_avg_count_df.at['Max', col]
                         if obj_max_val > ok_val:
                             obj_name = find_obj(col, counter_scope)
-                            if counter != '% VmWait':
+                            if counter != SPECIAL_COUNTER_VM_WAIT:
                                 object_name.append(obj_name)
                                 counter_name.append(counter)
                                 average.append(max_avg_count_df.at['Average', col])
@@ -155,7 +166,7 @@ def fault_finder(data_frame, working_dir):
                             warning_threshold.append(warning_val)
                             critical_threshold.append(critical_val)
             else:
-                if counter_type == 'Bool':
+                if counter_type == COUNTER_TYPE_BOOL:
                     min_series = pd.Series(temp_df2.min())
                     min_series = min_series.rename('Min')
                     for col in col_list:
@@ -179,7 +190,7 @@ def fault_finder(data_frame, working_dir):
                             warning_threshold.append(warning_val)
                             critical_threshold.append(critical_val)
                 else:
-                    if counter == "Adapter Q Depth":
+                    if counter == SPECIAL_COUNTER_ADAPTER_Q_DEPTH:
                         qdepth_series = pd.Series(temp_df2.max())
                         for col in col_list:
                             obj_name = find_obj(col, counter_scope)
@@ -188,7 +199,7 @@ def fault_finder(data_frame, working_dir):
                                 obj_name = obj_name.replace("(", " Adapter(")
                                 qdepths[obj_name] = qdepth
 
-                    if counter == "Commands/sec":
+                    if counter == SPECIAL_COUNTER_COMMANDS_PER_SEC:
                         try:
                             commands_series_max = pd.Series(temp_df2.max())
                             commands_series_avg = pd.Series(temp_df2.mean())
@@ -218,7 +229,7 @@ def fault_finder(data_frame, working_dir):
                                         warning_count_low.append(count_warning_low)
                                         warning_count_high.append(count_warning_high)
                                         critical_count.append(count_critical)
-                                        message.append('Possible HBA overload')
+                                        message.append(HBA_OVERLOAD_MESSAGE)
                                         ok_threshold.append(ok_val)
                                         warning_threshold.append(warning_val)
                                         critical_threshold.append(critical_val)

@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from const import LOG_FILE
+from const import CSV_ENCODINGS, LOG_FILE, SUPPORT_CONTACT
 from ui_functions import *
 
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
@@ -36,19 +36,22 @@ def load_csv(csv_location):
             return tdf
         except Exception as e:
             logging.error(f"file read error:{str(e)}")
-        try:
-            logging.info(f"Loading {csv_location} using ISO-8859–1 encoding. This may take a while")
-            tdf = pd.DataFrame(pd.read_csv(csv_location, encoding='ISO-8859–1'))
-            logging.info("CSV file successfully loaded to Memory")
-            return tdf
-        except Exception as e:
-            errmsg = f"File Read Error:{str(e)}"
-            logging.error(errmsg)
-            if "Unable to allocate" in errmsg:
-                error("File too big to load")
-            else:
-                error(errmsg)
-                fix_file(csv_location)
+        last_exception = None
+        for encoding in CSV_ENCODINGS:
+            try:
+                logging.info(f"Loading {csv_location} using {encoding} encoding. This may take a while")
+                tdf = pd.DataFrame(pd.read_csv(csv_location, encoding=encoding))
+                logging.info("CSV file successfully loaded to Memory")
+                return tdf
+            except Exception as e:
+                last_exception = e
+        errmsg = f"File Read Error:{str(last_exception)}"
+        logging.error(errmsg)
+        if "Unable to allocate" in errmsg:
+            error("File too big to load")
+        else:
+            error(errmsg)
+            fix_file(csv_location)
 
 
 def fix_file(csv_location):
@@ -75,4 +78,4 @@ def fix_file(csv_location):
         dialog("Fix success, please try to reload the file!")
     except Exception as e:
         logging.error(str(e))
-        error("Fix failure, please send this file to akshay.kalia@broadcom.com for debugging")
+        error(f"Fix failure, please send this file to {SUPPORT_CONTACT} for debugging")

@@ -5,7 +5,7 @@ import time
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from const import LOG_FILE
+from const import LOG_FILE, TIME_COLUMN_NAME
 
 log_file = LOG_FILE
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
@@ -20,7 +20,7 @@ def plotit(c_sel, filepath, c_filtred_data_frame, cg_sel):
     pname = str('Plot-' + pname + '-' + str(int(time.time())) + '.png')
     pname = os.path.join(filepath, cg_sel, pname)
     plotdf = c_filtred_data_frame
-    xdata = '(PDH-CSV 4.0) (UTC)(0)'
+    xdata = TIME_COLUMN_NAME
     ydata = c_sel
     fig_len = int(len(plotdf[xdata])) * 0.18
     fig_wid = fig_len * 0.5625
