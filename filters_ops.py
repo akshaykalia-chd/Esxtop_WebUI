@@ -5,7 +5,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from const import LOG_FILE
+from const import LOG_FILE, SYSTEM_OBJECT_PATTERNS
 from ui_functions import *
 
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=logging.INFO,
@@ -139,17 +139,9 @@ def prep_cg_selection(object_filtered_data_frame):
 def drop_sys_obj(data):
     sel = question('Do you want to drop system objects like vpxa workers, hostd workers etc?')
     if sel == 2:
-        sys_obj = [
-            ':system', ':helper', ':drivers', ':ft', ':vmotion', ':init', ':vmsyslogd', ':sh', ':vobd', ':vmkeventd',
-            ':vmkdevmgr', ':net-lacp', ':dhclient-uw', ':vmkiscsid', ':nfsgssd', ':busybox', ':ntpd',
-            ':vmware-usbarbitrator', ':ioFilterVPServer', ':swapobjd', ':storageRM', ':hostdCgiServer', ':sensord',
-            ':net-lbt', ':hostd', ':rhttpproxy', ':slpd', ':net-cdp', ':nscd', ':smartd', ':lwsmd', ':pktcap-agent',
-            ':netcpa', ':vdpi', ':logchannellogger', ':logger', ':dcui', ':vpxa', ':fdm', ':vsfwd', ':sfcbd',
-            ':sfcb-sfcb',
-            ':sfcb-ProviderMa', ':openwsmand', ':sshd', ':esxtop', ':gzip', ':sdrsInjector', ':timeout']
         c_df = pd.DataFrame(data.columns)
         c_index_list = list()
-        for obj in sys_obj:
+        for obj in SYSTEM_OBJECT_PATTERNS:
             c_index_list.extend(c_df.index[c_df[0].str.contains(obj)].tolist())
         c_name_list = list()
         for c_index in c_index_list:
