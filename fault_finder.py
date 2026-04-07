@@ -28,6 +28,17 @@ def fault_finder(data_frame, working_dir):
         logging.info(os.getcwd())
 
     cg_selection = list(c_map_df['Counter_Group'].unique())
+    c_map_grouped = c_map_df.groupby('Counter_Group', sort=False)
+    threshold_map = {}
+    for row in c_map_df.itertuples(index=False):
+        threshold_map[(row.Counter_Group, row.Counter)] = (
+            row.Counter_type,
+            row.Counter_Scope,
+            row.Ok_val,
+            row.Warning_val,
+            row.Critical_val,
+            row.Message,
+        )
     prep_working_dir(cg_selection, working_dir)
     object_name = list()
     counter_name = list()
@@ -43,14 +54,11 @@ def fault_finder(data_frame, working_dir):
     warning_threshold = list()
     critical_threshold = list()
     qdepths = pd.Series(dtype='int64')
+    obj_name_cache = {}
 
     for cg in cg_selection:
-        c_index = list()
-        counters = list()
-        c_index.extend(c_map_df.index[c_map_df['Counter_Group'] == cg].tolist())
+        counters = c_map_grouped.get_group(cg)['Counter'].tolist()
         temp_df1 = filer_counter_group(data_frame, cg, working_dir)
-        for index in c_index:
-            counters.append(c_map_df['Counter'][index])
         for counter in counters:
             temp_df2 = filer_counter(temp_df1, counter, cg, working_dir)
             try:
@@ -60,39 +68,32 @@ def fault_finder(data_frame, working_dir):
                                 f'Moving on')
                 continue
 
-            threshold = c_map_df.iloc[np.where(c_map_df.Counter_Group.values == cg)]
-            threshold = threshold.iloc[np.where(threshold.Counter.values == counter)]
-            counter_type = threshold['Counter_type'].values
-            counter_type = counter_type[0]
-            counter_scope = threshold['Counter_Scope'].values
-            counter_scope = counter_scope[0]
-            ok_val = threshold['Ok_val'].values
-            warning_val = threshold['Warning_val'].values
-            critical_val = threshold['Critical_val'].values
-            message_val = threshold['Message'].values
-            col_list = pd.DataFrame(temp_df2.columns)
-            col_list = list(col_list[0].unique())
+            threshold_vals = threshold_map.get((cg, counter))
+            if threshold_vals is None:
+                logging.warning(f'Missing threshold map for counter {counter} in group {cg}. Moving on')
+                continue
+            counter_type, counter_scope, ok_val, warning_val, critical_val, message_val = threshold_vals
+            col_list = temp_df2.columns.tolist()
 
             if counter_type != COUNTER_TYPE_BOOL and counter_type != COUNTER_TYPE_NUM_CAL:
-                ok_val = float(ok_val[0])
-                warning_val = float(warning_val[0])
-                critical_val = float(critical_val[0])
-                message_val = message_val[0]
-                avg_series = pd.Series(temp_df2.mean())
-                max_series = pd.Series(temp_df2.max())
+                ok_val = float(ok_val)
+                warning_val = float(warning_val)
+                critical_val = float(critical_val)
+                avg_series = temp_df2.mean()
+                max_series = temp_df2.max()
                 if counter_scope != COUNTER_SCOPE_OBJ_HIGHER_IS_BETTER:
-                    count_ok_series = pd.Series((temp_df2 <= ok_val).apply(np.count_nonzero))
-                    count_critical_series = pd.Series((temp_df2 >= critical_val).apply(np.count_nonzero))
-                    count_warning_series = pd.Series((temp_df2 > ok_val).apply(np.count_nonzero))
-                    count_warning_low = pd.Series((temp_df2 < warning_val).apply(np.count_nonzero))
-                    count_warning_high = pd.Series((temp_df2 >= warning_val).apply(np.count_nonzero))
+                    count_ok_series = (temp_df2 <= ok_val).sum(axis=0)
+                    count_critical_series = (temp_df2 >= critical_val).sum(axis=0)
+                    count_warning_series = (temp_df2 > ok_val).sum(axis=0)
+                    count_warning_low = (temp_df2 < warning_val).sum(axis=0)
+                    count_warning_high = (temp_df2 >= warning_val).sum(axis=0)
 
                 else:
-                    count_ok_series = pd.Series((temp_df2 >= ok_val).apply(np.count_nonzero))
-                    count_warning_series = pd.Series((temp_df2 < ok_val).apply(np.count_nonzero))
-                    count_critical_series = pd.Series((temp_df2 <= critical_val).apply(np.count_nonzero))
-                    count_warning_low = pd.Series((temp_df2 > warning_val).apply(np.count_nonzero))
-                    count_warning_high = pd.Series((temp_df2 <= warning_val).apply(np.count_nonzero))
+                    count_ok_series = (temp_df2 >= ok_val).sum(axis=0)
+                    count_warning_series = (temp_df2 < ok_val).sum(axis=0)
+                    count_critical_series = (temp_df2 <= critical_val).sum(axis=0)
+                    count_warning_low = (temp_df2 > warning_val).sum(axis=0)
+                    count_warning_high = (temp_df2 <= warning_val).sum(axis=0)
                 count_warning_low = count_warning_low.subtract(count_ok_series, fill_value=0)
                 count_warning_high = count_warning_high.subtract(count_critical_series, fill_value=0)
 
@@ -117,7 +118,10 @@ def fault_finder(data_frame, working_dir):
                     for col in col_list:
                         obj_max_val = max_avg_count_df.at['Max', col]
                         if obj_max_val > ok_val:
-                            obj_name = find_obj(col, counter_scope)
+                            obj_name = obj_name_cache.get((col, counter_scope))
+                            if obj_name is None:
+                                obj_name = find_obj(col, counter_scope)
+                                obj_name_cache[(col, counter_scope)] = obj_name
                             if counter != SPECIAL_COUNTER_VM_WAIT:
                                 object_name.append(obj_name)
                                 counter_name.append(counter)
@@ -151,7 +155,10 @@ def fault_finder(data_frame, working_dir):
                     for col in col_list:
                         obj_max_val = max_avg_count_df.at['Max', col]
                         if obj_max_val < ok_val:
-                            obj_name = find_obj(col, counter_scope)
+                            obj_name = obj_name_cache.get((col, counter_scope))
+                            if obj_name is None:
+                                obj_name = find_obj(col, counter_scope)
+                                obj_name_cache[(col, counter_scope)] = obj_name
                             object_name.append(obj_name)
                             counter_name.append(counter)
                             average.append(max_avg_count_df.at['Average', col])
@@ -167,7 +174,7 @@ def fault_finder(data_frame, working_dir):
                             critical_threshold.append(critical_val)
             else:
                 if counter_type == COUNTER_TYPE_BOOL:
-                    min_series = pd.Series(temp_df2.min())
+                    min_series = temp_df2.min()
                     min_series = min_series.rename('Min')
                     for col in col_list:
                         memctl_enabled = min_series[col]
@@ -176,7 +183,11 @@ def fault_finder(data_frame, working_dir):
                             warning_val = 'NA'
                             critical_val = '0'
                             message_val = 'Memory Ballooning is disabled. System will use swapping in case of contention.'
-                            object_name.append(find_obj(col, counter_scope))
+                            obj_name = obj_name_cache.get((col, counter_scope))
+                            if obj_name is None:
+                                obj_name = find_obj(col, counter_scope)
+                                obj_name_cache[(col, counter_scope)] = obj_name
+                            object_name.append(obj_name)
                             counter_name.append(counter)
                             average.append('NA')
                             maximum.append('NA')
@@ -191,9 +202,12 @@ def fault_finder(data_frame, working_dir):
                             critical_threshold.append(critical_val)
                 else:
                     if counter == SPECIAL_COUNTER_ADAPTER_Q_DEPTH:
-                        qdepth_series = pd.Series(temp_df2.max())
+                        qdepth_series = temp_df2.max()
                         for col in col_list:
-                            obj_name = find_obj(col, counter_scope)
+                            obj_name = obj_name_cache.get((col, counter_scope))
+                            if obj_name is None:
+                                obj_name = find_obj(col, counter_scope)
+                                obj_name_cache[(col, counter_scope)] = obj_name
                             if not (':' in obj_name):
                                 qdepth = qdepth_series[col]
                                 obj_name = obj_name.replace("(", " Adapter(")
@@ -201,10 +215,13 @@ def fault_finder(data_frame, working_dir):
 
                     if counter == SPECIAL_COUNTER_COMMANDS_PER_SEC:
                         try:
-                            commands_series_max = pd.Series(temp_df2.max())
-                            commands_series_avg = pd.Series(temp_df2.mean())
+                            commands_series_max = temp_df2.max()
+                            commands_series_avg = temp_df2.mean()
                             for col in col_list:
-                                obj_name = find_obj(col, counter_scope)
+                                obj_name = obj_name_cache.get((col, counter_scope))
+                                if obj_name is None:
+                                    obj_name = find_obj(col, counter_scope)
+                                    obj_name_cache[(col, counter_scope)] = obj_name
                                 if not (':' in obj_name):
                                     ok_val = qdepths[obj_name] * 1.5
                                     warning_val = qdepths[obj_name] * 3
